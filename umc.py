@@ -27,7 +27,7 @@ def run_flask():
 # --- 2. BOT LOGIC (Your Original Seed Code Style) ---
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-TOKEN = "8651749292:AAE7o6uhbOj1LFP-UOx715_AjHjVTeUOpC8" 
+TOKEN = "8651749292:AAE669h-KhqRLqVuHaoWiRo2zRRmza0W95c" 
 ADMIN_ID = 998942116 
 DEVELOPER_USERNAME = "@pselms" 
 
