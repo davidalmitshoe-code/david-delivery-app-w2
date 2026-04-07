@@ -20,17 +20,18 @@ def home():
     return "UMC Blessed Bot is Online 24/7"
 
 def run_flask():
-    # Render uses a dynamic port; we get it from the environment
+    # CRITICAL: Render needs this to be 0.0.0.0 and use the 'PORT' variable
     port = int(os.environ.get("PORT", 10000))
     server.run(host='0.0.0.0', port=port)
 
-# --- 2. BOT LOGIC (Your Original Seed Code Style) ---
+# --- 2. BOT LOGIC ---
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
+# Replace with Environment Variables on Render Dashboard for extra safety
 TOKEN = "8651749292:AAE669h-KhqRLqVuHaoWiRo2zRRmza0W95c" 
 ADMIN_ID = 998942116 
-DEVELOPER_USERNAME = "@pselms" 
-ADMIN_USERNAME  ="@Haffa_advert"
+DEVELOPER_USERNAME = "@pselms"
+ADMIN_USERNAME  ="@Haffa_advert"    
 
 NAME, PHONE, EMAIL, PHOTO, CHOIR_PART, PAY_TYPE, SCREENSHOT = range(7)
 
@@ -39,6 +40,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "🙏 **Grace and Peace to you in the name of our Lord!**\n\n"
         "Welcome to the UMC Choir Registration. We are blessed to have you.\n"
         "To begin, what is your **Full Name**?",
+        reply_markup=ReplyKeyboardRemove(),
         parse_mode="Markdown"
     )
     return NAME
@@ -92,7 +94,6 @@ async def get_pay_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     bank_details = (
         "✅ **Payment Details:**\n\n"
         "🏦 **CBE:** `1000021359778` (Hossana Hawariyawit B/K Maranata Mez)\n"
-       # "📱 **Telebirr:** `0979853369` (Gedion)\n\n"
         "Please complete your payment and **send the Screenshot** of the receipt below."
     )
     await update.message.reply_text(bank_details, parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
@@ -141,11 +142,11 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- 3. MAIN EXECUTION ---
 def main():
-    # Start the "Never Sleep" heartbeat in the background
+    # 1. Start the Flask server in a separate thread first
     threading.Thread(target=run_flask, daemon=True).start()
 
-    # Build the application with stability timeouts
-    application = Application.builder().token(TOKEN).connect_timeout(30).read_timeout(30).build()
+    # 2. Build the application
+    application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
@@ -153,7 +154,7 @@ def main():
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
             PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone)],
             EMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_email)],
-            PHOTO: [MessageHandler(filters.PHOTO, get_photo), CommandHandler('skip', get_photo), MessageHandler(filters.TEXT & ~filters.COMMAND, get_photo)],
+            PHOTO: [MessageHandler(filters.PHOTO | filters.TEXT & ~filters.COMMAND, get_photo), CommandHandler('skip', get_photo)],
             CHOIR_PART: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_choir_part)],
             PAY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_pay_type)],
             SCREENSHOT: [MessageHandler(filters.PHOTO, get_screenshot)],
@@ -162,7 +163,11 @@ def main():
     )
 
     application.add_handler(conv_handler)
-    print("Bot is LIVE globally! Press Ctrl+C to stop.")
+    
+    print("--- 🛠️ SCRIPT STARTING ---")
+    print("🚀 UMC Bot is LIVE and waiting for users!")
+    
+    # drop_pending_updates=True prevents the "Conflict" error after a restart
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
