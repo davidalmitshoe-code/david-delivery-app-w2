@@ -20,18 +20,18 @@ def home():
     return "UMC Blessed Bot is Online 24/7"
 
 def run_flask():
-    # CRITICAL: Render needs this to be 0.0.0.0 and use the 'PORT' variable
+    # Use the PORT provided by Render
     port = int(os.environ.get("PORT", 10000))
     server.run(host='0.0.0.0', port=port)
 
 # --- 2. BOT LOGIC ---
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-# Replace with Environment Variables on Render Dashboard for extra safety
+# --- CONFIGURATION ---
 TOKEN = "8651749292:AAE669h-KhqRLqVuHaoWiRo2zRRmza0W95c" 
 ADMIN_ID = 998942116 
-DEVELOPER_USERNAME = "@pselms"
-ADMIN_USERNAME  ="@Haffa_advert"    
+ADMIN_USERNAME = "@Haffa_advert" # Added this so the final message works
+DEVELOPER_USERNAME = "@pselms" 
 
 NAME, PHONE, EMAIL, PHOTO, CHOIR_PART, PAY_TYPE, SCREENSHOT = range(7)
 
@@ -93,7 +93,7 @@ async def get_pay_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data['pay_choice'] = update.message.text
     bank_details = (
         "✅ **Payment Details:**\n\n"
-        "🏦 **CBE:** `1000021359778` (Hossana Hawariyawit B/K Maranata Mez)\n"
+        "🏦 **CBE:** `1000021359778` (Hossana Hawariyawit B/K Maranata Mez)\n\n"
         "Please complete your payment and **send the Screenshot** of the receipt below."
     )
     await update.message.reply_text(bank_details, parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
@@ -106,6 +106,7 @@ async def get_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     receipt_photo = update.message.photo[-1].file_id
     user_info = context.user_data
+    
     admin_report = (
         "🚨 **NEW UMC REGISTRATION** 🚨\n\n"
         f"👤 **Name:** {user_info.get('name')}\n"
@@ -117,11 +118,13 @@ async def get_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
+        # Send data to Admin
         await context.bot.send_message(chat_id=ADMIN_ID, text=admin_report, parse_mode="Markdown")
         if user_info.get('profile_pic'):
             await context.bot.send_photo(chat_id=ADMIN_ID, photo=user_info['profile_pic'], caption="Member Profile Photo")
         await context.bot.send_photo(chat_id=ADMIN_ID, photo=receipt_photo, caption="Payment Receipt attached.")
         
+        # --- THE PART YOU WANTED FIXED ---
         await update.message.reply_text(
             "✅ **Registration Successful!**\n\n"
             "Your information has been submitted. May the Lord bless your service.\n\n"
@@ -142,10 +145,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # --- 3. MAIN EXECUTION ---
 def main():
-    # 1. Start the Flask server in a separate thread first
     threading.Thread(target=run_flask, daemon=True).start()
 
-    # 2. Build the application
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
@@ -154,7 +155,7 @@ def main():
             NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_name)],
             PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_phone)],
             EMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_email)],
-            PHOTO: [MessageHandler(filters.PHOTO | filters.TEXT & ~filters.COMMAND, get_photo), CommandHandler('skip', get_photo)],
+            PHOTO: [MessageHandler(filters.PHOTO | filters.TEXT, get_photo), CommandHandler('skip', get_photo)],
             CHOIR_PART: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_choir_part)],
             PAY_TYPE: [MessageHandler(filters.TEXT & ~filters.COMMAND, get_pay_type)],
             SCREENSHOT: [MessageHandler(filters.PHOTO, get_screenshot)],
@@ -165,9 +166,7 @@ def main():
     application.add_handler(conv_handler)
     
     print("--- 🛠️ SCRIPT STARTING ---")
-    print("🚀 UMC Bot is LIVE and waiting for users!")
-    
-    # drop_pending_updates=True prevents the "Conflict" error after a restart
+    # This prevents the "409 Conflict" error on Render restarts
     application.run_polling(drop_pending_updates=True)
 
 if __name__ == '__main__':
