@@ -30,6 +30,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 TOKEN = "8651749292:AAE669h-KhqRLqVuHaoWiRo2zRRmza0W95c" 
 ADMIN_ID = 998942116 
 DEVELOPER_USERNAME = "@pselms" 
+ADMIN_USERNAME  ="@Haffa_advert"
 
 NAME, PHONE, EMAIL, PHOTO, CHOIR_PART, PAY_TYPE, SCREENSHOT = range(7)
 
@@ -124,7 +125,7 @@ async def get_screenshot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "✅ **Registration Successful!**\n\n"
             "Your information has been submitted. May the Lord bless your service.\n\n"
             "📖 *'Serve the Lord with gladness; come before him with joyful songs.' - Psalm 100:2*\n\n"
-            f"🆘 Support: {ADMIN_ID}\n"
+            f"🆘 Support: {ADMIN_USERNAME}\n"
             f"💻 Support Developer: {DEVELOPER_USERNAME}",
             parse_mode="Markdown"
         )
